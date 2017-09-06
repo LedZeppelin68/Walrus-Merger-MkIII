@@ -62,15 +62,49 @@ namespace Walrus_Merger
                                             }
                                             break;
                                         case 0x20:
-                                            //reserved for mode2 form2 data
+                                            string Form2BlockMD5 = CalculatorRoutines.GetBlockMD5(ref temp, 24, 2324);
+                                            switch (Form2BlockMD5)
+                                            {
+                                                case "B4-07-91-E2-24-BD-42-5C-59-F0-05-55-1D-A1-16-45":
+                                                    MapWriter.Write((byte)2);
+                                                    MapWriter.Write(temp, 16, 8);
+                                                    MapWriter.Write(0xffffffffu);
+                                                    break;
+                                                default:
+                                                    if (duplicates.ContainsKey(Form2BlockMD5))
+                                                    {
+                                                        MapWriter.Write((byte)2);
+                                                        MapWriter.Write(temp, 16, 8);
+                                                        MapWriter.Write(duplicates[Form2BlockMD5]);
+                                                    }
+                                                    else
+                                                    {
+                                                        MapWriter.Write((byte)2);
+                                                        MapWriter.Write(temp, 16, 8);
+                                                        MapWriter.Write(WritersCursors["2324"]);
+
+                                                        duplicates.Add(Form2BlockMD5, WritersCursors["2324"]);
+                                                        Writers["2324"].Write(temp, 24, 2324);
+                                                        WritersCursors["2324"]++;
+
+                                                        Checksums_MD5["2324"].TransformBlock(temp, 24, 2324, null, 0);
+                                                    }
+                                                    break;
+                                            }
                                             break;
                                     }
                                     break;
                             }
                         }
                     }
+
+                    byte[] map = new byte[MapWriter.BaseStream.Length];
                     MapWriter.BaseStream.Position = 0;
-                    MapWriter.BaseStream.CopyTo(Writers["map"].BaseStream);
+                    MapWriter.BaseStream.CopyTo(new MemoryStream(map));
+
+                    Checksums_MD5["map"].TransformBlock(map, 0, map.Length, null, 0);
+
+                    Writers["map"].Write(map);
                 }
                 //copy map to main stream
             }

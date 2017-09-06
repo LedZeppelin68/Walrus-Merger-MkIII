@@ -44,8 +44,13 @@ namespace Walrus_Merger
                                 break;
                         }
                     }
+                    byte[] map = new byte[MapWriter.BaseStream.Length];
                     MapWriter.BaseStream.Position = 0;
-                    MapWriter.BaseStream.CopyTo(Writers["map"].BaseStream);
+                    MapWriter.BaseStream.CopyTo(new MemoryStream(map));
+
+                    Checksums_MD5["map"].TransformBlock(map, 0, map.Length, null, 0);
+
+                    Writers["map"].Write(map);
                 }
             }
         }

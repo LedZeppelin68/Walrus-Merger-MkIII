@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Security.Cryptography;
+using System.Xml;
 
 namespace Walrus_Merger
 {
@@ -12,7 +13,7 @@ namespace Walrus_Merger
     {
         static void Main(string[] args)
         {
-            args = new string[] { @"E:\temp\crash" };//for debug
+            args = new string[] { @"J:\PSX\ace3\E" };//for debug
 
             foreach (string folder in args)
             {
@@ -28,6 +29,9 @@ namespace Walrus_Merger
 
                 Dictionary<string, int> WritersCursors = new Dictionary<string, int>();
                 InitWritersCursors(ref WritersCursors);
+
+                XmlDocument ControlFileXML = new XmlDocument();
+                ControlFileXML.LoadXml("<root></root>");
 
                 foreach (string file in files)
                 {
@@ -45,13 +49,18 @@ namespace Walrus_Merger
                 }
 
                 FinalizeChecksums_MD5(ref Checksums_MD5);
-                CloseWriters(ref Writers, ref Checksums_MD5);
+                CloseWriters(ref Writers, ref Checksums_MD5, folder, ref ControlFileXML);
+
+                ControlFileXML.Save(Path.Combine(folder, "test.xml"));
             }
         }
 
         private static void FinalizeChecksums_MD5(ref Dictionary<string, MD5> Checksums_MD5)
         {
             Checksums_MD5["2048"].TransformFinalBlock(new byte[0], 0, 0);
+            Checksums_MD5["2324"].TransformFinalBlock(new byte[0], 0, 0);
+            Checksums_MD5["2352"].TransformFinalBlock(new byte[0], 0, 0);
+            Checksums_MD5["map"].TransformFinalBlock(new byte[0], 0, 0);
         }
 
         private static void InitChecksums_MD5(ref Dictionary<string, MD5> Checksums_MD5)
@@ -62,8 +71,10 @@ namespace Walrus_Merger
             Checksums_MD5.Add("map", MD5.Create());
         }
 
-        private static void CloseWriters(ref Dictionary<string, BinaryWriter> Writers, ref Dictionary<string, MD5> Checksums_MD5)
+        private static void CloseWriters(ref Dictionary<string, BinaryWriter> Writers, ref Dictionary<string, MD5> Checksums_MD5, string folder, ref XmlDocument ControlFileXML)
         {
+            XmlElement XML_partitions = ControlFileXML.CreateElement("partition");
+
             foreach (KeyValuePair<string, BinaryWriter> Writer in Writers)
             {
                 FileStream fs = (FileStream)Writer.Value.BaseStream;
@@ -75,9 +86,17 @@ namespace Walrus_Merger
                 }
                 else
                 {
-                    File.Move(Filename, Path.Combine("", Checksums_MD5[Writer.Key]));
+                    string NewFilename = BitConverter.ToString(Checksums_MD5[Writer.Key].Hash).Replace("-","").ToLower();
+                    File.Move(Filename, Path.Combine(folder, NewFilename));
+
+                    XmlElement XML_partition = ControlFileXML.CreateElement("record");
+                    XML_partition.SetAttribute("type", Writer.Key);
+                    XML_partition.SetAttribute("md5", NewFilename);
+                    XML_partitions.AppendChild(XML_partition);
                 }
             }
+
+            ControlFileXML.AppendChild(XML_partitions);
         }
 
         private static void InitWritersCursors(ref Dictionary<string, int> WritersCursors)
