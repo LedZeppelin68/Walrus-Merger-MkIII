@@ -13,11 +13,14 @@ namespace Walrus_Merger
     {
         static void Main(string[] args)
         {
-            args = new string[] { @"J:\PSX\ace3\E" };//for debug
+            args = new string[] { @"E:\temp\re" };//for debug
 
             foreach (string folder in args)
             {
-                string[] files = Directory.GetFiles(folder);
+                //string[] files = Directory.GetFiles(folder);
+                List<string> records = new List<string>();
+                records.AddRange(Directory.GetDirectories(folder));
+                records.AddRange(Directory.GetFiles(folder));
 
                 Dictionary<string, Int32> duplicates = new Dictionary<string, Int32>();
 
@@ -33,25 +36,63 @@ namespace Walrus_Merger
                 XmlDocument ControlFileXML = new XmlDocument();
                 ControlFileXML.LoadXml("<root></root>");
 
-                foreach (string file in files)
-                {
-                    string type = TypeCheck.FileType(file);
+                XmlElement swarm = ControlFileXML.CreateElement("swarm");
+                ControlFileXML.DocumentElement.AppendChild(swarm);
 
-                    switch (type)
+                foreach(string record in records)
+                {
+                    List<string> files = new List<string>();
+                    XmlElement record_XML = ControlFileXML.CreateElement("record");
+                    record_XML.SetAttribute("name", Path.GetFileNameWithoutExtension(record));
+                    switch(new FileInfo(record).Attributes)
                     {
-                        case "iso":
-                            merger_iso_2048.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5);
+                        case FileAttributes.Directory:
+                            record_XML.SetAttribute("type", "dir");
+                            string[] dirs = Directory.GetDirectories(record);
+                            foreach(string dir in dirs)
+                            {
+                                XmlElement directory = ControlFileXML.CreateElement("dir");
+                                directory.SetAttribute("name", dir);
+                                record_XML.AppendChild(directory);
+                            }
+                            files.AddRange(Directory.GetFiles(record));
                             break;
-                        case "raw":
-                            merger_raw_2352.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5);
+                        default:
+                            record_XML.SetAttribute("type", "file");
+                            files.Add(record);
                             break;
                     }
+
+                    foreach (string file in files)
+                    {
+                        XmlElement file_XML = ControlFileXML.CreateElement("file");
+
+                        string type = TypeCheck.FileType(file);
+                        file_XML.SetAttribute("type", type);
+
+                        switch (type)
+                        {
+                            case "iso":
+                                merger_iso_2048.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML);
+                                break;
+                            case "raw":
+                                merger_raw_2352.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML);
+                                break;
+                            case "file":
+                                merger_file.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML);
+                                break;
+                        }
+                        record_XML.AppendChild(file_XML);
+                    }
+                    swarm.AppendChild(record_XML);
                 }
+
+                
 
                 FinalizeChecksums_MD5(ref Checksums_MD5);
                 CloseWriters(ref Writers, ref Checksums_MD5, folder, ref ControlFileXML);
 
-                ControlFileXML.Save(Path.Combine(folder, "test.xml"));
+                ControlFileXML.Save(Path.Combine(folder, Path.GetFileName(folder) + ".xml"));
             }
         }
 
@@ -90,13 +131,13 @@ namespace Walrus_Merger
                     File.Move(Filename, Path.Combine(folder, NewFilename));
 
                     XmlElement XML_partition = ControlFileXML.CreateElement("record");
+                    XML_partition.SetAttribute("name", NewFilename);
                     XML_partition.SetAttribute("type", Writer.Key);
-                    XML_partition.SetAttribute("md5", NewFilename);
                     XML_partitions.AppendChild(XML_partition);
                 }
             }
 
-            ControlFileXML.AppendChild(XML_partitions);
+            ControlFileXML.DocumentElement.AppendChild(XML_partitions);
         }
 
         private static void InitWritersCursors(ref Dictionary<string, int> WritersCursors)

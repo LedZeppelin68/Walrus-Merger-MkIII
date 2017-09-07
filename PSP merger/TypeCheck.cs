@@ -13,20 +13,26 @@ namespace Walrus_Merger
 
         internal static string FileType(string file)
         {
-            string type = "unknown";
+            string type = "file";
 
             using (BinaryReader FileReader = new BinaryReader(new FileStream(file, FileMode.Open)))
             {
-                FileReader.BaseStream.Seek(0x8000, SeekOrigin.Begin);
-                if(FileReader.ReadBytes(magic_word_iso.Length).SequenceEqual(magic_word_iso))
+                if (FileReader.BaseStream.Length >= 0x8000)
                 {
-                    return "iso";
+                    FileReader.BaseStream.Seek(0x8000, SeekOrigin.Begin);
+                    if (FileReader.ReadBytes(magic_word_iso.Length).SequenceEqual(magic_word_iso))
+                    {
+                        return "iso";
+                    }
                 }
 
-                FileReader.BaseStream.Seek(0x9318, SeekOrigin.Begin);
-                if (FileReader.ReadBytes(magic_word_iso.Length).SequenceEqual(magic_word_iso))
+                if (FileReader.BaseStream.Length >= 0x9318)
                 {
-                    return "raw";
+                    FileReader.BaseStream.Seek(0x9318, SeekOrigin.Begin);
+                    if (FileReader.ReadBytes(magic_word_iso.Length).SequenceEqual(magic_word_iso))
+                    {
+                        return "raw";
+                    }
                 }
             }
 

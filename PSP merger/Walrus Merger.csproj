@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="CalculatorRoutines.cs" />
     <Compile Include="CRC32.cs" />
+    <Compile Include="merger_file.cs" />
     <Compile Include="merger_iso_2048.cs" />
     <Compile Include="merger_raw_2352.cs" />
     <Compile Include="Program.cs" />
