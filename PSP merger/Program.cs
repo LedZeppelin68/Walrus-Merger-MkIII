@@ -13,7 +13,7 @@ namespace Walrus_Merger
     {
         static void Main(string[] args)
         {
-            args = new string[] { @"E:\temp\re" };//for debug
+            //args = new string[] { @"K:\zeptrades\Tales of Destiny" };//for debug
 
             foreach (string folder in args)
             {

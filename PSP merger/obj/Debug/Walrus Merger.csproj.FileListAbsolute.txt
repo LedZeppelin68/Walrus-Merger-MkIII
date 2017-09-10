@@ -4,3 +4,9 @@ C:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merge
 C:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\obj\Debug\Walrus Merger.csprojResolveAssemblyReference.cache
 C:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\obj\Debug\Walrus Merger MkIII.exe
 C:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\obj\Debug\Walrus Merger MkIII.pdb
+I:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\bin\Debug\Walrus Merger MkIII.exe.config
+I:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\bin\Debug\Walrus Merger MkIII.exe
+I:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\bin\Debug\Walrus Merger MkIII.pdb
+I:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\obj\Debug\Walrus Merger.csprojResolveAssemblyReference.cache
+I:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\obj\Debug\Walrus Merger MkIII.exe
+I:\Users\Андрей\Documents\Visual Studio 2013\Projects\PSP merger\PSP merger\obj\Debug\Walrus Merger MkIII.pdb
