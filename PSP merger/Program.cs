@@ -13,7 +13,7 @@ namespace Walrus_Merger
     {
         static void Main(string[] args)
         {
-            //args = new string[] { @"K:\zeptrades\Tales of Destiny" };//for debug
+            //args = new string[] { @"E:\temp\lem" };//for debug
 
             foreach (string folder in args)
             {
@@ -101,6 +101,7 @@ namespace Walrus_Merger
             Checksums_MD5["2048"].TransformFinalBlock(new byte[0], 0, 0);
             Checksums_MD5["2324"].TransformFinalBlock(new byte[0], 0, 0);
             Checksums_MD5["2352"].TransformFinalBlock(new byte[0], 0, 0);
+            Checksums_MD5["pcm"].TransformFinalBlock(new byte[0], 0, 0);
             Checksums_MD5["map"].TransformFinalBlock(new byte[0], 0, 0);
         }
 
@@ -109,6 +110,7 @@ namespace Walrus_Merger
             Checksums_MD5.Add("2048", MD5.Create());
             Checksums_MD5.Add("2324", MD5.Create());
             Checksums_MD5.Add("2352", MD5.Create());
+            Checksums_MD5.Add("pcm", MD5.Create());
             Checksums_MD5.Add("map", MD5.Create());
         }
 
@@ -120,14 +122,50 @@ namespace Walrus_Merger
             {
                 FileStream fs = (FileStream)Writer.Value.BaseStream;
                 string Filename = fs.Name;
+
+                string key = Writer.Key;
+
                 Writer.Value.Close();
-                if (new FileInfo(Filename).Length == 0)
+
+                bool deleted = false;
+                switch(key)
                 {
-                    File.Delete(Filename);
+                    default:
+                        if (new FileInfo(Filename).Length == 0)
+                        {
+                            File.Delete(Filename);
+                            deleted = true;
+                        }
+                        break;
+                    case "pcm":
+                        if (new FileInfo(Filename).Length == 44)
+                        {
+                            File.Delete(Filename);
+                            deleted = true;
+                        }
+                        else
+                        {
+                            using (BinaryWriter wr = new BinaryWriter(new FileStream(Filename, FileMode.Open)))
+                            {
+                                wr.BaseStream.Seek(4, SeekOrigin.Begin);
+                                wr.Write((int)wr.BaseStream.Length - 8);
+                                wr.BaseStream.Seek(40, SeekOrigin.Begin);
+                                wr.Write((int)wr.BaseStream.Length - 44);
+                            }
+                        }
+                        break;
                 }
-                else
+                //Writer.Value.Close();
+
+                //if (new FileInfo(Filename).Length == 0)
+                //{
+                //    File.Delete(Filename);
+                //}
+                //else
+                if(!deleted)
                 {
                     string NewFilename = BitConverter.ToString(Checksums_MD5[Writer.Key].Hash).Replace("-","").ToLower();
+                    if (key == "pcm") NewFilename += ".wav";
                     File.Move(Filename, Path.Combine(folder, NewFilename));
 
                     XmlElement XML_partition = ControlFileXML.CreateElement("record");
@@ -145,6 +183,7 @@ namespace Walrus_Merger
             WritersCursors.Add("2048", 0);
             WritersCursors.Add("2324", 0);
             WritersCursors.Add("2352", 0);
+            WritersCursors.Add("pcm", 0);
         }
 
         private static void InitWriters(ref Dictionary<string, BinaryWriter> Writers, string folder)
@@ -152,7 +191,10 @@ namespace Walrus_Merger
             Writers.Add("2048", new BinaryWriter(new FileStream(Path.Combine(folder, (new Random(2048).Next()).ToString()), FileMode.Create)));
             Writers.Add("2324", new BinaryWriter(new FileStream(Path.Combine(folder, (new Random(2324).Next()).ToString()), FileMode.Create)));
             Writers.Add("2352", new BinaryWriter(new FileStream(Path.Combine(folder, (new Random(2352).Next()).ToString()), FileMode.Create)));
+            Writers.Add("pcm", new BinaryWriter(new FileStream(Path.Combine(folder, (new Random(777).Next()).ToString()), FileMode.Create)));
             Writers.Add("map", new BinaryWriter(new FileStream(Path.Combine(folder, (new Random(666).Next()).ToString()), FileMode.Create)));
+
+            Writers["pcm"].Write(CalculatorRoutines.riff);
         }
 
         private static void SaveStatistic(Statistic stat, string file)
