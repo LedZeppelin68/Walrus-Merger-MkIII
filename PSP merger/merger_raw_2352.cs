@@ -37,11 +37,12 @@ namespace Walrus_Merger
 
                         if (CalculatorRoutines.SyncCompare(ref temp))
                         {
-                            file_MD5.TransformBlock(temp, 0, 2352, null, 0);
+                            //file_MD5.TransformBlock(temp, 0, 2352, null, 0);
                             switch (temp[15])
                             {
                                 case 1:
                                     BlockMD5 = CalculatorRoutines.GetBlockMD5(ref temp, 16, 2048);
+                                    file_MD5.TransformBlock(temp, 0, 2352, null, 0);
                                     switch (BlockMD5)
                                     {
                                         case "C9-9A-74-C5-55-37-1A-43-3D-12-1F-55-1D-6C-63-98":
@@ -74,6 +75,7 @@ namespace Walrus_Merger
                                     {
                                         default:
                                             BlockMD5 = CalculatorRoutines.GetBlockMD5(ref temp, 24, 2048);
+                                            file_MD5.TransformBlock(temp, 0, 2352, null, 0);
                                             int ecc_error = CalculatorRoutines.CheckECCerror(ref temp);
                                             switch (BlockMD5)
                                             {
@@ -106,6 +108,7 @@ namespace Walrus_Merger
                                             break;
                                         case 0x20:
                                             string Form2BlockMD5 = CalculatorRoutines.GetBlockMD5(ref temp, 24, 2324);
+                                            file_MD5.TransformBlock(temp, 0, 2352, null, 0);
                                             int null_edc = CalculatorRoutines.CheckNulledc(ref temp);
                                             switch (Form2BlockMD5)
                                             {
@@ -160,6 +163,9 @@ namespace Walrus_Merger
 
                             FileReader.BaseStream.Seek(audio_start, SeekOrigin.Begin);
 
+                            bool audio_last = false;
+                            int audio_chunk_size = 0;
+
                             while (FileReader.BaseStream.Position != audio_end)
                             {
                                 int null_samples = 0;
@@ -172,7 +178,7 @@ namespace Walrus_Merger
 
                                 if (null_samples != 0)
                                 {
-                                    MapWriter.Write((byte)(0x80 | 0));
+                                    MapWriter.Write((byte)(0x80));
                                     MapWriter.Write(null_samples);
                                 }
 
@@ -186,6 +192,9 @@ namespace Walrus_Merger
                                     FileReader.BaseStream.Seek(-4, SeekOrigin.Current);
                                     byte[] audio_temp = new byte[2352];
 
+                                    //bool audio_last = false;
+                                    //int audio_last_chunk_size = 0;
+
                                     switch ((audio_end - FileReader.BaseStream.Position) >= 2352)
                                     {
                                         case true:
@@ -194,11 +203,12 @@ namespace Walrus_Merger
                                             file_MD5.TransformBlock(audio_temp, 0, 2352, null, 0);
                                             break;
                                         case false:
-                                            int audio_chunk_size = (int)(audio_end - FileReader.BaseStream.Position);
+                                            audio_chunk_size = (int)(audio_end - FileReader.BaseStream.Position);
                                             byte[] audio_chunk_last = FileReader.ReadBytes(audio_chunk_size);
                                             BlockMD5 = CalculatorRoutines.GetBlockMD5(ref audio_chunk_last, 0, audio_chunk_size);
                                             file_MD5.TransformBlock(audio_chunk_last, 0, audio_chunk_size, null, 0);
                                             Array.Copy(audio_chunk_last, audio_temp, audio_chunk_size);
+                                            audio_last = true;
                                             break;
                                     }
 
@@ -207,12 +217,32 @@ namespace Walrus_Merger
                                         default:
                                             if (duplicates.ContainsKey(BlockMD5))
                                             {
-                                                MapWriter.Write((byte)0);
+                                                switch(audio_last)
+                                                {
+                                                    case true:
+                                                        MapWriter.Write((byte)0x40);
+                                                        MapWriter.Write((Int16)audio_chunk_size);
+                                                        break;
+                                                    case false:
+                                                        MapWriter.Write((byte)0);
+                                                        break;
+                                                }
+                                                //MapWriter.Write((byte)0);
                                                 MapWriter.Write(duplicates[BlockMD5]);
                                             }
                                             else
                                             {
-                                                MapWriter.Write((byte)0);
+                                                switch (audio_last)
+                                                {
+                                                    case true:
+                                                        MapWriter.Write((byte)0x40);
+                                                        MapWriter.Write((Int16)audio_chunk_size);
+                                                        break;
+                                                    case false:
+                                                        MapWriter.Write((byte)0);
+                                                        break;
+                                                }
+                                                //MapWriter.Write((byte)0);
                                                 MapWriter.Write(WritersCursors["pcm"]);
 
                                                 duplicates.Add(BlockMD5, WritersCursors["pcm"]);
