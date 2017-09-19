@@ -11,7 +11,7 @@ namespace Walrus_Merger
 {
     class merger_file
     {
-        internal static void Merge(string file, ref Dictionary<string, System.IO.BinaryWriter> Writers, ref Dictionary<string, int> WritersCursors, ref Dictionary<string, int> duplicates, ref Dictionary<string, System.Security.Cryptography.MD5> Checksums_MD5, ref System.Xml.XmlElement file_XML)
+        internal static void Merge(string file, ref Dictionary<string, System.IO.BinaryWriter> Writers, ref Dictionary<string, int> WritersCursors, ref Dictionary<string, int> duplicates, ref Dictionary<string, System.Security.Cryptography.MD5> Checksums_MD5, ref System.Xml.XmlElement file_XML, ref Dictionary<string, Program.map> Relink_Map)
         {
             using(BinaryReader FileReader = new BinaryReader(new FileStream(file,FileMode.Open)))
             {

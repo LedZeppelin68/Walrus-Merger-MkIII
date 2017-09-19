@@ -11,13 +11,18 @@ namespace Walrus_Merger
 {
     class Program
     {
+        public struct map
+        {
+            public long map_offset;
+            public long map_length;
+        }
+
         static void Main(string[] args)
         {
             //args = new string[] { @"E:\temp\lem" };//for debug
 
             foreach (string folder in args)
             {
-                //string[] files = Directory.GetFiles(folder);
                 List<string> records = new List<string>();
                 records.AddRange(Directory.GetDirectories(folder));
                 records.AddRange(Directory.GetFiles(folder));
@@ -32,6 +37,8 @@ namespace Walrus_Merger
 
                 Dictionary<string, int> WritersCursors = new Dictionary<string, int>();
                 InitWritersCursors(ref WritersCursors);
+
+                Dictionary<string, map> Relink_Map = new Dictionary<string, map>();
 
                 XmlDocument ControlFileXML = new XmlDocument();
                 ControlFileXML.LoadXml("<root></root>");
@@ -73,13 +80,13 @@ namespace Walrus_Merger
                         switch (type)
                         {
                             case "iso":
-                                merger_iso_2048.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML);
+                                merger_iso_2048.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML, ref Relink_Map);
                                 break;
                             case "raw":
-                                merger_raw_2352.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML);
+                                merger_raw_2352.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML, ref Relink_Map);
                                 break;
                             case "file":
-                                merger_file.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML);
+                                merger_file.Merge(file, ref Writers, ref WritersCursors, ref duplicates, ref Checksums_MD5, ref file_XML, ref Relink_Map);
                                 break;
                         }
                         record_XML.AppendChild(file_XML);
