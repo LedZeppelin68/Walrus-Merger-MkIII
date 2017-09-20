@@ -27,6 +27,8 @@ namespace Walrus_Merger
                 file_XML.SetAttribute("size", FileReader.BaseStream.Length.ToString());
                 file_XML.SetAttribute("date", "debug");
 
+                int msf_counter = 0;
+
                 using (BinaryWriter MapWriter = new BinaryWriter(new MemoryStream()))
                 {
                     while (FileReader.BaseStream.Position != FileReader.BaseStream.Length)
@@ -37,7 +39,7 @@ namespace Walrus_Merger
 
                         if (CalculatorRoutines.SyncCompare(ref temp))
                         {
-                            //file_MD5.TransformBlock(temp, 0, 2352, null, 0);
+                            byte msf_correction = CalculatorRoutines.CheckMSF(ref temp, ref msf_counter);
                             switch (temp[15])
                             {
                                 case 1:
@@ -46,18 +48,30 @@ namespace Walrus_Merger
                                     switch (BlockMD5)
                                     {
                                         case "C9-9A-74-C5-55-37-1A-43-3D-12-1F-55-1D-6C-63-98":
-                                            MapWriter.Write((byte)1);
+                                            MapWriter.Write((byte)(1 | msf_correction));
+                                            if (msf_correction != 0)
+                                            {
+                                                MapWriter.Write((int)msf_counter);
+                                            }
                                             MapWriter.Write(0xffffffffu);
                                             break;
                                         default:
                                             if (duplicates.ContainsKey(BlockMD5))
                                             {
-                                                MapWriter.Write((byte)1);
+                                                MapWriter.Write((byte)(1 | msf_correction));
+                                                if (msf_correction != 0)
+                                                {
+                                                    MapWriter.Write((int)msf_counter);
+                                                }
                                                 MapWriter.Write(duplicates[BlockMD5]);
                                             }
                                             else
                                             {
-                                                MapWriter.Write((byte)1);
+                                                MapWriter.Write((byte)(1 | msf_correction));
+                                                if (msf_correction != 0)
+                                                {
+                                                    MapWriter.Write((int)msf_counter);
+                                                }
                                                 MapWriter.Write(WritersCursors["2048"]);
 
                                                 duplicates.Add(BlockMD5, WritersCursors["2048"]);
@@ -80,20 +94,32 @@ namespace Walrus_Merger
                                             switch (BlockMD5)
                                             {
                                                 case "C9-9A-74-C5-55-37-1A-43-3D-12-1F-55-1D-6C-63-98":
-                                                    MapWriter.Write((byte)(2 | ecc_error));//
+                                                    MapWriter.Write((byte)(2 | ecc_error | msf_correction));//
+                                                    if (msf_correction != 0)
+                                                    {
+                                                        MapWriter.Write((int)msf_counter);
+                                                    }
                                                     MapWriter.Write(temp, 16, 8);
                                                     MapWriter.Write(0xffffffffu);
                                                     break;
                                                 default:
                                                     if (duplicates.ContainsKey(BlockMD5))
                                                     {
-                                                        MapWriter.Write((byte)(2 | ecc_error));//
+                                                        MapWriter.Write((byte)(2 | ecc_error | msf_correction));//
+                                                        if (msf_correction != 0)
+                                                        {
+                                                            MapWriter.Write((int)msf_counter);
+                                                        }
                                                         MapWriter.Write(temp, 16, 8);
                                                         MapWriter.Write(duplicates[BlockMD5]);
                                                     }
                                                     else
                                                     {
-                                                        MapWriter.Write((byte)(2 | ecc_error));//
+                                                        MapWriter.Write((byte)(2 | ecc_error | msf_correction));//
+                                                        if (msf_correction != 0)
+                                                        {
+                                                            MapWriter.Write((int)msf_counter);
+                                                        }
                                                         MapWriter.Write(temp, 16, 8);
                                                         MapWriter.Write(WritersCursors["2048"]);
 
@@ -113,20 +139,32 @@ namespace Walrus_Merger
                                             switch (Form2BlockMD5)
                                             {
                                                 case "B4-07-91-E2-24-BD-42-5C-59-F0-05-55-1D-A1-16-45":
-                                                    MapWriter.Write((byte)(2 | null_edc));
+                                                    MapWriter.Write((byte)(2 | null_edc | msf_correction));
+                                                    if (msf_correction != 0)
+                                                    {
+                                                        MapWriter.Write((int)msf_counter);
+                                                    }
                                                     MapWriter.Write(temp, 16, 8);
                                                     MapWriter.Write(0xffffffffu);
                                                     break;
                                                 default:
                                                     if (duplicates.ContainsKey(Form2BlockMD5))
                                                     {
-                                                        MapWriter.Write((byte)(2 | null_edc));
+                                                        MapWriter.Write((byte)(2 | null_edc | msf_correction));
+                                                        if (msf_correction != 0)
+                                                        {
+                                                            MapWriter.Write((int)msf_counter);
+                                                        }
                                                         MapWriter.Write(temp, 16, 8);
                                                         MapWriter.Write(duplicates[Form2BlockMD5]);
                                                     }
                                                     else
                                                     {
-                                                        MapWriter.Write((byte)(2 | null_edc));
+                                                        MapWriter.Write((byte)(2 | null_edc | msf_correction));
+                                                        if (msf_correction != 0)
+                                                        {
+                                                            MapWriter.Write((int)msf_counter);
+                                                        }
                                                         MapWriter.Write(temp, 16, 8);
                                                         MapWriter.Write(WritersCursors["2324"]);
 
@@ -259,6 +297,7 @@ namespace Walrus_Merger
                                 }
                             }
                         }
+                        msf_counter++;
                     }
 
                     file_MD5.TransformFinalBlock(new byte[0], 0, 0);
